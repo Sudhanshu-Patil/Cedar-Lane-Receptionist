@@ -3,3 +3,4 @@ node_modules
 service-account.json
 *.json.key
 vertex-sa.json
+brag-output/work/

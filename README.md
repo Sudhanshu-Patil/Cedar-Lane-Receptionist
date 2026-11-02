@@ -7,6 +7,15 @@ A TypeScript AI receptionist. It books appointments in Google Calendar and logs 
 ## Demo videos
 - Phase 1 (chat + Calendar + Sheet): https://drive.google.com/file/d/1todXohpV7nNXUIgT9Hr4oTSzYCYMg6VO/view
 - Phase 2 (real phone call via Vapi): https://drive.google.com/file/d/1ZmsE1UJmPs0Io7qPFsGfqDrgnU2P4NZH/view
+- Product demo, 23s (one call from ring to calendar to log): [brag-output/brag.mp4](brag-output/brag.mp4)
+
+## Website
+`npm start` also serves a site for the shop at `/`. It puts the same agent in front of customers three ways:
+- **Call:** the Vapi phone number.
+- **Chat:** a widget that talks to `/chat`.
+- **Talk in your browser:** a Vapi web call to the same assistant as the phone line.
+
+Prices and hours come from `config.ts` through `GET /api/shop`, so the site and the agent always agree. For browser calls, `POST /api/voice` refreshes the saved assistant and returns only the public key and assistant ID, so the webhook secret never reaches the browser. The plain chat page from Phase 1 is still at `/chat.html`. Photos and video are from Unsplash and Mixkit (see `public/CREDITS.md`).
 
 ## Run
 ```bash
@@ -25,7 +34,7 @@ npm run vapi                      # sync the Vapi assistant + phone number to PU
 4. Gemini (chat): set `GEMINI_API_KEY`. Alternatively, set `VERTEX_PROJECT` and `VERTEX_SA_KEY` to bill a GCP project through Vertex AI.
 5. Vapi:
    - Run `cloudflared tunnel --url http://localhost:3000` and set `PUBLIC_URL` to the URL it prints.
-   - Set `VAPI_SECRET` to any random string, and set `VAPI_API_KEY` to your Vapi private key.
+   - Set `VAPI_SECRET` to any random string, and set `VAPI_API_KEY` to your Vapi private key. For the website's browser calls, also set `VAPI_PUBLIC_KEY`.
    - Create a free Vapi number, then run `npm run vapi`. It points the number at `PUBLIC_URL/vapi` (no fixed assistant) and saves a copy of the assistant for the dashboard's "Talk" button. Re-run it whenever the tunnel URL changes.
 
 ## How it works
@@ -38,7 +47,8 @@ npm run vapi                      # sync the Vapi assistant + phone number to PU
 | `src/prompt.ts` | The system prompt, with a 14-day date table so the model never does date math. |
 | `src/agent.ts` | The Gemini tool loop for chat. It retries Gemini's occasional empty turn after a tool result, and rolls back a failed turn. |
 | `src/vapi.ts` | The Vapi assistant config, built per call from the same prompt and tools. |
-| `src/server.ts` | `/chat`, plus `/vapi` for `assistant-request`, `tool-calls`, and `end-of-call-report`. |
+| `src/server.ts` | `/chat`, plus `/vapi` for `assistant-request`, `tool-calls`, and `end-of-call-report`. Also `/api/shop` and `/api/voice` for the website. |
+| `public/` | The shop website (`index.html`, `app.js`, `styles.css`) and the Phase 1 chat page (`chat.html`). |
 | `scripts/` | `seed.ts` (test data), `check.ts` (offline asserts), `vapi-assistant.ts` (Vapi sync). |
 
 **Correctness choices**
