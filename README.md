@@ -6,7 +6,7 @@ A TypeScript AI receptionist. It books appointments in Google Calendar and logs 
 
 ## Demo videos
 - Phase 1 (chat + Calendar + Sheet): https://drive.google.com/file/d/1todXohpV7nNXUIgT9Hr4oTSzYCYMg6VO/view
-- Phase 2 (real phone call via Vapi): https://drive.google.com/file/d/1Fiuz5k3GKAM3zdwGoKOPTm_FPSGqSAah/view
+- Phase 2 (real phone call via Vapi): https://drive.google.com/file/d/1ZmsE1UJmPs0Io7qPFsGfqDrgnU2P4NZH/view
 
 ## Run
 ```bash
