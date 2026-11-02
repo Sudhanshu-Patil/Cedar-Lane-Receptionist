@@ -8,7 +8,7 @@ const str = (description: string) => ({ type: "string", description });
 const DATE = str("YYYY-MM-DD, taken from the date table in the system prompt");
 const TIME = str("HH:MM 24-hour shop-local time, e.g. 15:30");
 const SERVICE = { type: "string", enum: Object.keys(SERVICES), description: "service key" };
-const PHONE = str("caller's 10-digit phone number");
+const PHONE = str("phone digits exactly as the caller said them, spaces fine (e.g. '4 1 5 5 5 5 0 1 90'). Do not regroup or retype digits; the server normalizes.");
 const EVENT_ID = str("event_id returned by find_bookings");
 
 // One list, used for the Gemini chat loop AND sent to Vapi. `filler` is what Vapi says while the tool runs.
@@ -25,7 +25,7 @@ export const TOOLS: {
   },
   {
     name: "book_appointment",
-    description: "Book the appointment. Only after the caller agreed to the exact slot and gave name + phone.",
+    description: "Book the appointment. Only after the caller agreed to the exact slot, gave name + phone, AND confirmed your read-back of both (names get misheard).",
     parameters: {
       type: "object",
       properties: { date: DATE, time: TIME, service: SERVICE, name: str("caller's name"), phone: PHONE, vehicle: str("make/model if given") },

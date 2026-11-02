@@ -14,6 +14,8 @@ const slot = (hm: string, min: number) => ({ start: thu(hm), end: thu(hm).plus({
 assert.equal(normalizePhone("415-555-0190"), "415-555-0190");
 assert.equal(normalizePhone("+1 (415) 555 0190"), "415-555-0190");
 assert.equal(normalizePhone("555-0190"), null);
+assert.equal(normalizePhone("4 1 5 5 5 5 o 1 90"), "415-555-0190"); // speech-to-text "oh"
+assert.equal(normalizePhone("41555550190"), null); // 11 digits not starting with 1 -> reject, never guess
 
 // the spec's example: 3:30 interior & wash (90m) is full, 4:30 is open
 assert.match(slotProblem(slot("15:30", 90), busy, now)!, /booked/);

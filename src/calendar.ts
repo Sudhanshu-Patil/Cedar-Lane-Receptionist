@@ -19,7 +19,7 @@ type Interval = { start: DateTime; end: DateTime };
 
 /** "(415) 555-0190", "+1 415 555 0190" -> "415-555-0190". null if not a 10-digit US number. */
 export function normalizePhone(raw: string): string | null {
-  let d = String(raw ?? "").replace(/\D/g, "");
+  let d = String(raw ?? "").replace(/o/gi, "0").replace(/\D/g, ""); // speech-to-text writes "oh" as "o"
   if (d.length === 11 && d.startsWith("1")) d = d.slice(1);
   return d.length === 10 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : null;
 }
@@ -105,7 +105,7 @@ export async function checkAvailability(a: { date: string; time: string; service
 
 export async function book(a: { date: string; time: string; service: string; name: string; phone: string; vehicle?: string }) {
   const phone = normalizePhone(a.phone);
-  if (!phone) return { booked: false, reason: "phone number must be 10 digits, ask the caller again" };
+  if (!phone) return { booked: false, reason: `phone "${a.phone}" has ${String(a.phone).replace(/o/gi, "0").replace(/\D/g, "").length} digits, need 10. Re-check against what the caller said (and your read-back) before asking them again.` };
   if (!a.name?.trim()) return { booked: false, reason: "need the caller's name" };
   // Re-check right before writing: never trust an earlier availability answer.
   // ponytail: check-then-insert race if two callers grab the same slot in the same second. Fine at 30 calls/day.
