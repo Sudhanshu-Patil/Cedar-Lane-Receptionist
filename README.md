@@ -7,7 +7,9 @@ A TypeScript AI receptionist. It books appointments in Google Calendar and logs 
 ## Demo videos
 - Phase 1 (chat + Calendar + Sheet): https://drive.google.com/file/d/1todXohpV7nNXUIgT9Hr4oTSzYCYMg6VO/view
 - Phase 2 (real phone call via Vapi): https://drive.google.com/file/d/1ZmsE1UJmPs0Io7qPFsGfqDrgnU2P4NZH/view
-- Product demo, 23s (one call from ring to calendar to log): [brag-output/brag.mp4](brag-output/brag.mp4)
+- Product demo, 23s (one call from ring to calendar to log). Click the preview for the full video with sound:
+
+[![Cedar Lane AI receptionist demo](brag-output/brag.gif)](brag-output/brag.mp4)
 
 ## Website
 `npm start` also serves a site for the shop at `/`. It puts the same agent in front of customers three ways:
