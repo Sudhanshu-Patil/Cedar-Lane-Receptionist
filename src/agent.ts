@@ -2,7 +2,7 @@ import { Content, GoogleGenAI, Part } from "@google/genai";
 import { buildSystemPrompt } from "./prompt.js";
 import { runTool, TOOLS } from "./tools.js";
 
-// SDK default is 5 retries with up to 60s backoff: a busy model looked like a 7-minute hang. Fail fast instead.
+// SDK default is 5 retries with up to 60s backoff; fail fast instead.
 const httpOptions = { timeout: 30_000, retryOptions: { attempts: 3, maxDelay: 2 } };
 
 // Vertex AI (billed to a GCP project via service account) if configured, else a plain Gemini API key.
@@ -15,10 +15,10 @@ const ai = process.env.VERTEX_PROJECT
       httpOptions,
     })
   : new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions });
-const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL = "gemini-2.5-flash";
 const functionDeclarations = TOOLS.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.parameters }));
 
-// ponytail: in-memory sessions, lost on restart. Fine for a demo; Redis if this runs for real.
+// In-memory sessions, lost on restart.
 const sessions = new Map<string, Content[]>();
 
 export async function chat(sessionId: string, message: string): Promise<string> {
@@ -43,7 +43,7 @@ export async function chat(sessionId: string, message: string): Promise<string> 
     // read text parts ourselves (res.text warns when the turn also has function calls); skip thought summaries
     const text = content?.parts?.filter((p) => p.text && !p.thought).map((p) => p.text).join("").trim();
 
-    // Gemini quirk: after a tool result it sometimes ends the turn with no text. Don't keep that turn; ask again.
+    // Gemini sometimes returns an empty turn after a tool result. Drop it and ask again.
     if (!calls.length && !text) {
       console.warn("[agent] empty model turn, retrying");
       nudge = true;
@@ -54,7 +54,7 @@ export async function chat(sessionId: string, message: string): Promise<string> 
     if (!calls.length) return text!;
 
     const parts: Part[] = await Promise.all(calls.map(async (c) => ({
-      functionResponse: { id: c.id, name: c.name, response: { result: await runTool(c.name!, c.args, { channel: "chat" }) } },
+      functionResponse: { id: c.id, name: c.name, response: { result: await runTool(c.name!, c.args, "chat") } },
     })));
     history.push({ role: "user", parts });
   }

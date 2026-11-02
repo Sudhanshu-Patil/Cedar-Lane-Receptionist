@@ -1,4 +1,5 @@
 import { DateTime } from "luxon";
+import { now as shopNow } from "./calendar.js";
 import { HOURS, LARGE_VEHICLE_SURCHARGE, POLICIES, SERVICES, SHOP, TZ } from "./config.js";
 
 /** The model never does date math: it reads "Thursday" off this table. */
@@ -12,7 +13,7 @@ function dateTable(now: DateTime) {
 }
 
 export function buildSystemPrompt(channel: "chat" | "voice", callerNumber?: string) {
-  const now = DateTime.now().setZone(TZ);
+  const now = shopNow();
   const services = Object.entries(SERVICES)
     .map(([key, s]) => `- ${s.name} [key: ${key}]: $${s.price}, ${s.minutes} min. Includes ${s.includes}.`)
     .join("\n");

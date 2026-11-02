@@ -1,11 +1,9 @@
 import { google } from "googleapis";
-import { DateTime } from "luxon";
-import { auth, normalizePhone } from "./calendar.js";
-import { TZ } from "./config.js";
+import { auth, normalizePhone, now } from "./calendar.js";
 
-const sheets = google.sheets({ version: "v4", auth });
+export const sheets = google.sheets({ version: "v4", auth });
 const spreadsheetId = process.env.SHEET_ID!;
-const stamp = () => DateTime.now().setZone(TZ).toFormat("yyyy-MM-dd HH:mm");
+const stamp = () => now().toFormat("yyyy-MM-dd HH:mm");
 
 export const CONTACT_HEADERS = ["Phone", "Name", "Vehicle", "First Contact", "Last Contact", "Last Summary"];
 export const CALL_HEADERS = ["Timestamp", "Channel", "Phone", "Name", "Intent", "Summary", "Outcome", "Needs Human"];

@@ -22,11 +22,9 @@ app.post("/chat", async (req, res) => {
 });
 
 // ---------- Phase 2: Vapi ----------
-// The Vapi phone number has no assistant attached, only Server URL = PUBLIC_URL/vapi.
-// So every inbound call asks us for its assistant -> fresh date table, same prompt + tools as chat.
-// Per-call facts picked up from tool calls, so a hang-up before log_call still gets a useful row.
-// ponytail: in-memory, lost on restart mid-call. Fine for a demo.
-type CallState = { logged?: boolean; name?: string; phone?: string; intent?: string; outcome?: string };
+// The phone number has no fixed assistant, so each call requests one here (fresh date table).
+// Facts from tool calls are kept per call for the end-of-call log row. In-memory.
+type CallState = { name?: string; phone?: string; intent?: string; outcome?: string };
 const calls = new Map<string, CallState>();
 const INTENT: Record<string, string> = { book_appointment: "booking", reschedule_appointment: "reschedule", cancel_appointment: "cancel", mark_running_late: "running_late" };
 
@@ -46,11 +44,10 @@ app.post("/vapi", async (req, res) => {
     const results = await Promise.all((msg.toolCallList ?? []).map(async (tc: any) => {
       const name: string = tc.function.name;
       const args = typeof tc.function.arguments === "string" ? JSON.parse(tc.function.arguments) : tc.function.arguments;
-      const result: any = await runTool(name, args, { channel: "voice" });
+      const result: any = await runTool(name, args, "voice");
       if (callId) {
         const s = calls.get(callId) ?? {};
         calls.set(callId, s);
-        if (name === "log_call") s.logged = true;
         s.name = args?.name || s.name;
         s.phone = args?.phone || s.phone;
         if (INTENT[name]) s.intent = INTENT[name];
@@ -63,26 +60,23 @@ app.post("/vapi", async (req, res) => {
     return res.json({ results });
   }
 
-  // Caller hung up before the agent wrapped up: still log the call so the sheet is complete.
   if (msg.type === "end-of-call-report" && callId) {
     const s = calls.get(callId) ?? {};
     calls.delete(callId);
-    // Vapi's post-call LLM extraction fills in intent/summary/needs_human, but it guesses:
-    // it logged "booked" for a call where no booking happened. So facts (outcome, phone, name) come only from
-    // what our tools actually did, or the real caller ID. The extraction never gets to claim a booking.
+    // Vapi's analysis supplies summary/intent/needs_human. Outcome, phone and name come from
+    // actual tool results, since the analysis can claim a booking that never happened.
     const d = msg.analysis?.structuredData ?? {};
     const claimsAction = /book|resched|cancel/i.test(d.outcome ?? "");
-    if (!s.logged)
-      await logCall({
-        channel: "voice",
-        phone: s.phone || callerNumber,
-        name: s.name || d.name,
-        vehicle: d.vehicle,
-        intent: s.intent || d.intent || "other",
-        summary: d.summary || msg.analysis?.summary || msg.summary || "(no summary)",
-        outcome: s.outcome || (d.outcome && !claimsAction ? d.outcome : `no booking made (ended: ${msg.endedReason})`),
-        needs_human: d.needs_human === true,
-      }).catch((e) => console.error("call log failed", e));
+    await logCall({
+      channel: "voice",
+      phone: s.phone || callerNumber,
+      name: s.name || d.name,
+      vehicle: d.vehicle,
+      intent: s.intent || d.intent || "other",
+      summary: d.summary || msg.analysis?.summary || msg.summary || "(no summary)",
+      outcome: s.outcome || (d.outcome && !claimsAction ? d.outcome : `no booking made (ended: ${msg.endedReason})`),
+      needs_human: d.needs_human === true,
+    }).catch((e) => console.error("call log failed", e));
   }
   res.json({});
 });

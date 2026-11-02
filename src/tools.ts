@@ -2,7 +2,7 @@ import { book, cancel, checkAvailability, findBookings, markLate, reschedule } f
 import { SERVICES } from "./config.js";
 import { logCall, upsertContact } from "./sheets.js";
 
-export type Ctx = { channel: "chat" | "voice" };
+export type Channel = "chat" | "voice";
 
 const str = (description: string) => ({ type: "string", description });
 const DATE = str("YYYY-MM-DD, taken from the date table in the system prompt");
@@ -11,10 +11,10 @@ const SERVICE = { type: "string", enum: Object.keys(SERVICES), description: "ser
 const PHONE = str("phone digits exactly as the caller said them, spaces fine (e.g. '4 1 5 5 5 5 0 1 90'). Do not regroup or retype digits; the server normalizes.");
 const EVENT_ID = str("event_id returned by find_bookings");
 
-// One list, used for the Gemini chat loop AND sent to Vapi. `filler` is what Vapi says while the tool runs.
+// Shared by the chat loop and Vapi. `filler` is what Vapi says while the tool runs.
 export const TOOLS: {
   name: string; description: string; parameters: object; filler?: string;
-  run: (args: any, ctx: Ctx) => Promise<unknown>;
+  run: (args: any, channel: Channel) => Promise<unknown>;
 }[] = [
   {
     name: "check_availability",
@@ -88,16 +88,16 @@ export const TOOLS: {
       },
       required: ["intent", "summary", "outcome", "needs_human"],
     },
-    run: (a, ctx) => logCall({ ...a, channel: ctx.channel }),
+    run: (a, channel) => logCall({ ...a, channel }),
   },
 ];
 
-/** Never throws: errors go back to the model as data so it can recover ("that booking isn't under this number"). */
-export async function runTool(name: string, args: unknown, ctx: Ctx) {
+/** Never throws: errors go back to the model as data so it can recover. */
+export async function runTool(name: string, args: unknown, channel: Channel) {
   const tool = TOOLS.find((t) => t.name === name);
   try {
     if (!tool) throw new Error(`unknown tool ${name}`);
-    const result = await tool.run(args ?? {}, ctx);
+    const result = await tool.run(args ?? {}, channel);
     console.log(`[tool] ${name}`, JSON.stringify(args), "->", JSON.stringify(result));
     return result;
   } catch (e: any) {

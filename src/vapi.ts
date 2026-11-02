@@ -1,4 +1,3 @@
-import { SHOP } from "./config.js";
 import { buildSystemPrompt } from "./prompt.js";
 import { TOOLS } from "./tools.js";
 
@@ -6,23 +5,22 @@ export const VAPI_URL = `${process.env.PUBLIC_URL}/vapi`;
 
 /** Full Vapi assistant config, built from the same prompt + tools as the chat agent. */
 export function assistant(callerNumber?: string) {
-  // Vapi sends `secret` as the x-vapi-secret header on some message types and `headers` on others; set both.
+  // Vapi reads the secret from `secret` or `headers` depending on message type; set both.
   const secret = process.env.VAPI_SECRET;
   const server = { url: VAPI_URL, ...(secret && { secret, headers: { "x-vapi-secret": secret } }) };
   return {
     name: "Cedar Lane Receptionist",
-    firstMessage: `Hi, thanks for calling ${SHOP.replace(" Auto Detailing", "")}, how can I help?`,
+    firstMessage: "Hi, thanks for calling Cedar Lane, how can I help?",
     model: {
-      // Voice runs on OpenAI: measured Gemini on Vapi at 2.6-9.8s/turn (Google capacity issues), gpt-4.1-mini is ~0.5s.
-      provider: process.env.VAPI_PROVIDER || "openai",
-      model: process.env.VAPI_MODEL || "gpt-4.1-mini",
+      // gpt-4.1-mini: ~0.3s per turn on Vapi, vs 2.6-9.8s measured for Gemini.
+      provider: "openai",
+      model: "gpt-4.1-mini",
       temperature: 0.3,
       maxTokens: 150, // short replies = faster TTS start
-      // Only offer caller ID if it's a US number: bookings need 10-digit US phones, and reading out "+91 72..." derailed a call.
+      // Bookings need a 10-digit US number, so only offer caller ID for +1 numbers.
       messages: [{ role: "system", content: buildSystemPrompt("voice", callerNumber?.startsWith("+1") ? callerNumber : undefined) }],
       tools: [
-        // log_call is chat-only: on voice the model stalled (silent turn) when asked to call a tool at goodbye.
-        // Voice calls are logged from Vapi's end-of-call analysis instead (see analysisPlan + /vapi end-of-call-report).
+        // Voice calls are logged from the end-of-call report (server.ts), not log_call.
         ...TOOLS.filter((t) => t.name !== "log_call").map((t) => ({
           type: "function",
           function: { name: t.name, description: t.description, parameters: t.parameters },
@@ -32,9 +30,9 @@ export function assistant(callerNumber?: string) {
         { type: "endCall" },
       ],
     },
-    // Latency knobs. Target: caller stops talking -> agent audio starts < 1.2s.
+    // Latency target: under 1.2s from caller stopping to agent speaking.
     transcriber: { provider: "deepgram", model: "nova-3", language: "en" },
-    voice: { provider: "vapi", voiceId: process.env.VAPI_VOICE || "Elliot" },
+    voice: { provider: "vapi", voiceId: "Elliot" },
     startSpeakingPlan: {
       waitSeconds: 0.4,
       transcriptionEndpointingPlan: {
@@ -43,7 +41,7 @@ export function assistant(callerNumber?: string) {
         onNumberSeconds: 0.9, // don't cut people off mid phone number
       },
     },
-    // Hang up deterministically when the agent says the closing line (the prompt mandates it); the model kept forgetting endCall.
+    // Hang up when the agent says the closing line instead of relying on the endCall tool.
     endCallPhrases: ["have a great day"],
     stopSpeakingPlan: { numWords: 1, voiceSeconds: 0.2, backoffSeconds: 1 }, // caller can interrupt
     backgroundSound: "office",

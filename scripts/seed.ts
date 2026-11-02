@@ -1,22 +1,19 @@
 // Seeds the test calendar + sheet. Safe to re-run: only deletes events it created (seed=1).
 import "dotenv/config";
-import { google } from "googleapis";
 import { DateTime } from "luxon";
-import { auth } from "../src/calendar.js";
+import { cal, now } from "../src/calendar.js";
 import { SERVICES, TZ } from "../src/config.js";
-import { CALL_HEADERS, CONTACT_HEADERS } from "../src/sheets.js";
+import { CALL_HEADERS, CONTACT_HEADERS, sheets } from "../src/sheets.js";
 
-const cal = google.calendar({ version: "v3", auth });
-const sheets = google.sheets({ version: "v4", auth });
 const calendarId = process.env.CALENDAR_ID!;
 const spreadsheetId = process.env.SHEET_ID!;
 
-const today = DateTime.now().setZone(TZ).startOf("day");
+const today = now().startOf("day");
 const next = (weekday: number) => today.plus({ days: ((weekday - today.weekday + 7) % 7) || 7 }); // strictly after today
 const thu = next(4), fri = next(5), sat = next(6);
 // Same-day booking ~30-60 min from now, for the running-late demo. Re-run seed right before recording.
-const now = DateTime.now().setZone(TZ);
-const soon = now.startOf("hour").plus({ minutes: now.minute < 30 ? 60 : 90 });
+const t = now();
+const soon = t.startOf("hour").plus({ minutes: t.minute < 30 ? 60 : 90 });
 
 const SEED = [
   // Thursday 2:30-4:30 taken -> "3:30 interior detail & wash" (90 min) is full, 4:30 is open. The spec's example.

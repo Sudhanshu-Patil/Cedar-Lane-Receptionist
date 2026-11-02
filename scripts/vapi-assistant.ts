@@ -1,7 +1,5 @@
-// Saves the same assistant the phone line builds per call into your Vapi account,
-// so you can test it in the browser ("Talk to Assistant"). `npm run vapi`
-// The phone number still uses the dynamic /vapi assistant-request path (fresh date table per call);
-// re-run this script each day you test, since the saved prompt's date table is frozen at save time.
+// `npm run vapi`: saves the assistant to Vapi for the dashboard's "Talk" button and points phone numbers at /vapi.
+// The saved prompt's date table is fixed at save time, so re-run it on test days.
 import "dotenv/config";
 import { assistant } from "../src/vapi.js";
 
@@ -23,7 +21,7 @@ const existing = ((await api("/assistant")) as any[]).find((a) => a.name === con
 const saved = existing ? await api(`/assistant/${existing.id}`, "PATCH", config) : await api("/assistant", "POST", config);
 console.log(`${existing ? "updated" : "created"} assistant ${saved.id}. Open it in the Vapi dashboard and click "Talk to Assistant".`);
 
-// Point every phone number at our webhook (no fixed assistant -> it asks /vapi per call). Quick tunnels change URL on restart.
+// No fixed assistant: each call requests one from /vapi.
 for (const n of (await api("/phone-number")) as any[]) {
   await api(`/phone-number/${n.id}`, "PATCH", { assistantId: null, server: config.server });
   console.log(`phone ${n.number} -> ${config.server.url}`);
