@@ -5,8 +5,8 @@ A TypeScript AI receptionist. It books appointments in Google Calendar and logs 
 - **Phase 2** is a phone line on Vapi. It shares the same prompt, tools and handlers; only the voice model differs (see Voice latency).
 
 ## Demo videos
-- Phase 1 (chat + Calendar + Sheet): _link_
-- Phase 2 (real phone call via Vapi): _link_
+- Phase 1 (chat + Calendar + Sheet): https://drive.google.com/file/d/1todXohpV7nNXUIgT9Hr4oTSzYCYMg6VO/view
+- Phase 2 (real phone call via Vapi): https://drive.google.com/file/d/1Fiuz5k3GKAM3zdwGoKOPTm_FPSGqSAah/view
 
 ## Run
 ```bash
