@@ -1,6 +1,8 @@
 // Everything the agent is allowed to "know" about the shop. If it's not here, it hands off.
 export const SHOP = "Cedar Lane Auto Detailing";
 export const TZ = "America/Los_Angeles";
+export const PHONE = "+19732016143"; // the Vapi number
+export const ADDRESS = "2140 Cedar Lane";
 export const SLOT_STEP_MIN = 30; // alternatives are offered on a 30-min grid
 
 // luxon weekday: 1 = Mon ... 7 = Sun. null = closed.
@@ -32,5 +34,5 @@ Payment: card or cash at pickup. No deposit needed to book.
 Cancellations/reschedules: free, just give us a call - earlier is better.
 Running late: we hold the slot for 15 minutes. Later than that, we may need to reschedule.
 Drop-off: you can wait in the lobby (wifi + coffee) or drop the car off; we text when it's ready.
-Location: 2140 Cedar Lane. Parking out front.
+Location: ${ADDRESS}. Parking out front.
 `.trim();

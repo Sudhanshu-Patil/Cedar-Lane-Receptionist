@@ -54,3 +54,24 @@ export function assistant(callerNumber?: string) {
     server,
   };
 }
+
+export function vapiApi(path: string, method = "GET", body?: unknown) {
+  return fetch(`https://api.vapi.ai${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${process.env.VAPI_API_KEY}`, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  }).then(async (r) => {
+    const data = await r.json();
+    if (!r.ok) throw new Error(`${method} ${path} -> ${r.status} ${JSON.stringify(data)}`);
+    return data;
+  });
+}
+
+let savedId: string | undefined;
+/** Saves the current assistant to Vapi (fresh date table) for browser calls and the dashboard. Returns its id. */
+export async function saveAssistant(): Promise<string> {
+  const config = assistant();
+  savedId ??= ((await vapiApi("/assistant")) as any[]).find((a) => a.name === config.name)?.id;
+  const saved = savedId ? await vapiApi(`/assistant/${savedId}`, "PATCH", config) : await vapiApi("/assistant", "POST", config);
+  return (savedId = saved.id as string);
+}

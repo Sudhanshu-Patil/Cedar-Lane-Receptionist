@@ -1,13 +1,31 @@
 import "dotenv/config";
 import express from "express";
 import { chat } from "./agent.js";
-import { assistant, VAPI_URL } from "./vapi.js";
+import { assistant, saveAssistant, VAPI_URL } from "./vapi.js";
 import { logCall } from "./sheets.js";
 import { runTool } from "./tools.js";
+import { ADDRESS, HOURS, LARGE_VEHICLE_SURCHARGE, PHONE, SERVICES, SHOP, TZ } from "./config.js";
 
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
+
+// Public shop facts for the website, straight from config so the site and the agent never disagree.
+app.get("/api/shop", (_req, res) => {
+  res.json({ name: SHOP, phone: PHONE, address: ADDRESS, hours: HOURS, services: Object.values(SERVICES), surcharge: LARGE_VEHICLE_SURCHARGE, tz: TZ });
+});
+
+// Browser voice calls: refresh the saved assistant (date table, current time) right before each call.
+// Only the public key and assistant id reach the browser; the webhook secret stays server-side.
+app.post("/api/voice", async (_req, res) => {
+  if (!process.env.VAPI_PUBLIC_KEY || !process.env.VAPI_API_KEY) return res.status(503).json({ error: "voice not configured" });
+  try {
+    res.json({ publicKey: process.env.VAPI_PUBLIC_KEY, assistantId: await saveAssistant() });
+  } catch (e: any) {
+    console.error("[voice]", e?.message);
+    res.status(502).json({ error: "voice unavailable" });
+  }
+});
 
 // ---------- Phase 1: text chat ----------
 app.post("/chat", async (req, res) => {

@@ -1,39 +1,238 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cedar Lane Auto Detailing - Receptionist</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; }
-    #log { border: 1px solid #ccc; height: 70vh; overflow-y: auto; padding: 1rem; white-space: pre-wrap; }
-    .you { color: #0645ad; } .agent { color: #222; } .err { color: #b00; } .typing { color: #888; font-style: italic; }
-    form { display: flex; gap: .5rem; margin-top: .5rem; } input { flex: 1; padding: .5rem; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Cedar Lane Auto Detailing</title>
+  <meta name="description" content="Hand detailing for cars, SUVs, pickups and minivans on Cedar Lane. Book online, by phone, or talk to our receptionist in your browser, 24/7." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700&family=Barlow:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <h3>Cedar Lane Auto Detailing</h3>
-  <div id="log"></div>
-  <form id="f"><input id="m" autocomplete="off" placeholder="Type a message..." autofocus /><button>Send</button></form>
-  <script>
-    const sessionId = crypto.randomUUID();
-    const log = document.getElementById("log"), input = document.getElementById("m");
-    const add = (cls, who, text) => { const p = document.createElement("p"); p.className = cls; p.textContent = `${who}: ${text}`; log.append(p); log.scrollTop = 1e9; };
-    document.getElementById("f").onsubmit = async (e) => {
-      e.preventDefault();
-      const message = input.value.trim(); if (!message) return;
-      input.value = ""; add("you", "You", message);
-      const typing = document.createElement("p"); typing.className = "typing"; typing.textContent = "Agent is typing…";
-      log.append(typing); log.scrollTop = 1e9; input.disabled = true;
-      try {
-        const r = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId, message }) });
-        const data = await r.json();
-        data.reply !== undefined ? add("agent", "Agent", data.reply) : add("err", "Error", data.error);
-      } catch (err) {
-        add("err", "Error", err.message);
-      } finally {
-        typing.remove(); input.disabled = false; input.focus();
-      }
-    };
-  </script>
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="brand" href="#"><span class="mark">CL</span><span>Cedar Lane <em>Auto Detailing</em></span></a>
+      <nav aria-label="Main">
+        <a href="#vehicles">Vehicles</a>
+        <a href="#packages">Packages</a>
+        <a href="#hours">Hours</a>
+        <a href="#contact">Book 24/7</a>
+        <button class="btn small" data-open-chat>Book now</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero: real footage on loop, text stays put on top. -->
+    <section class="hero">
+      <video class="hero-video" src="/video/hero.mp4" poster="/video/hero.webp" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+      <div class="wrap hero-copy">
+        <p class="status" id="open-status">&nbsp;</p>
+        <h1>Showroom shine.<span>One bay. No shortcuts.</span></h1>
+        <p class="lede">Hand washing and detailing for cars, SUVs, pickups and minivans. Our AI receptionist books you in 24/7: call, chat, or talk to it right here in your browser.</p>
+        <div class="actions">
+          <button class="btn" data-open-chat>Chat to book</button>
+          <button class="btn ghost" data-talk><span class="dot"></span>Talk to us now</button>
+          <a class="phone" data-phone-link href="#"></a>
+        </div>
+      </div>
+      <a class="scroll-hint" href="#process">Inside the bay</a>
+    </section>
+
+    <ul class="stats wrap">
+      <li><b>4</b>detail packages</li>
+      <li><b>1</b>bay, one car at a time</li>
+      <li><b>15 min</b>grace if you're running late</li>
+      <li><b>24/7</b>booking by chat, phone or voice</li>
+    </ul>
+
+    <section id="contact" class="block channels">
+      <div class="wrap">
+        <p class="kicker">Booking, 24/7</p>
+        <h2>Our AI receptionist <span>picks up every time.</span></h2>
+        <p class="lede">It checks our real calendar, books, moves or cancels appointments, and answers questions about prices, hours and prep. Complaints, refunds and custom quotes go to the owner, who calls you back.</p>
+        <div class="channel-grid">
+          <a class="channel" data-phone-link href="#">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>
+            <b>Call us</b>
+            <span class="channel-number" data-phone-text></span>
+            <small>The AI receptionist answers the phone, day or night.</small>
+          </a>
+          <button class="channel" data-open-chat>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+            <b>Chat here</b>
+            <span class="channel-number">Replies in seconds</span>
+            <small>Type like a text message. The chat stays open while you browse.</small>
+          </button>
+          <button class="channel" data-talk>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1a7 7 0 0 0 6-6.9z"/></svg>
+            <b>Talk in your browser</b>
+            <span class="channel-number">No phone needed</span>
+            <small>A voice call from this page. Your browser will ask for the microphone.</small>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Process: steps scroll on the left, a sticky video on the right switches to each step's loop. -->
+    <section id="process" class="block process">
+      <div class="wrap process-grid">
+        <div class="steps-col">
+          <p class="kicker">Inside the bay</p>
+          <h2>What happens <span>to your car.</span></h2>
+          <article class="pstep" data-clip="0">
+            <span class="pnum">01</span>
+            <h3>Foam &amp; hand wash</h3>
+            <p>Pre-foam to lift grit, then every panel washed by hand. Wheels and tires scrubbed, glass streak-free, tires dressed.</p>
+          </article>
+          <article class="pstep" data-clip="1">
+            <span class="pnum">02</span>
+            <h3>Interior, seam by seam</h3>
+            <p>Vacuum, seats and carpets shampooed, leather wiped down, dash and door panels cleaned, interior glass.</p>
+          </article>
+          <article class="pstep" data-clip="2">
+            <span class="pnum">03</span>
+            <h3>Clay, polish &amp; wax</h3>
+            <p>On a full detail we decontaminate the paint with clay and finish with a hand-applied wax.</p>
+          </article>
+          <article class="pstep" data-clip="3">
+            <span class="pnum">04</span>
+            <h3>Ready when you are</h3>
+            <p>We text you the moment it's done. Pay at pickup by card or cash, no deposit to book.</p>
+            <div class="actions">
+              <button class="btn" data-open-chat>Book a slot</button>
+              <button class="btn ghost" data-talk><span class="dot"></span>Talk to us</button>
+            </div>
+          </article>
+        </div>
+        <div class="media-col" aria-hidden="true">
+          <div class="screen">
+            <video src="/video/foam.mp4" poster="/video/foam.webp" muted loop playsinline preload="metadata" class="on"></video>
+            <video src="/video/interior.mp4" poster="/video/interior.webp" muted loop playsinline preload="none"></video>
+            <video src="/video/polish.mp4" poster="/video/polish.webp" muted loop playsinline preload="none"></video>
+            <video src="/video/ready.mp4" poster="/video/ready.webp" muted loop playsinline preload="none"></video>
+            <div class="screen-meta"><span id="clip-num">01</span> / 04<i><b id="clip-bar"></b></i></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="vehicles" class="block">
+      <div class="wrap">
+        <p class="kicker">What we detail</p>
+        <h2>Cars to minivans. <span>Priced by size.</span></h2>
+        <div class="vehicles">
+          <article class="vehicle"><img src="/img/sedan.jpg" alt="Dark sedan parked outside a garage" loading="lazy" /><div><h3>Sedans &amp; coupes</h3><p>Standard pricing</p></div></article>
+          <article class="vehicle"><img src="/img/suv.jpg" alt="Grey SUV parked on a plaza" loading="lazy" /><div><h3>SUVs &amp; crossovers</h3><p>Standard · 3-row <b class="surcharge"></b></p></div></article>
+          <article class="vehicle"><img src="/img/pickup.jpg" alt="Silver pickup truck at sunset" loading="lazy" /><div><h3>Pickup trucks</h3><p>Standard · full-size <b class="surcharge"></b></p></div></article>
+          <article class="vehicle"><img src="/img/minivan.jpg" alt="Silver minivan with its sliding door open" loading="lazy" /><div><h3>Minivans</h3><p><b class="surcharge"></b></p></div></article>
+          <article class="vehicle quote"><img src="/img/garage.jpg" alt="" loading="lazy" /><div>
+            <h3>RVs, boats, bikes &amp; fleets</h3>
+            <p>Custom quote from the owner.</p>
+            <button class="btn small" data-ask="I'd like a quote for detailing my RV.">Ask for a quote</button>
+          </div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="packages" class="block dark">
+      <div class="wrap">
+        <div class="row-head">
+          <div>
+            <p class="kicker">Packages</p>
+            <h2>Straight prices. <span>No upsell at the counter.</span></h2>
+          </div>
+          <div class="size-toggle" role="radiogroup" aria-label="Vehicle size">
+            <button role="radio" aria-checked="true" data-size="0">Car / small SUV</button>
+            <button role="radio" aria-checked="false" data-size="1">Large vehicle</button>
+          </div>
+        </div>
+        <div class="packages" id="packages-grid"></div>
+      </div>
+    </section>
+
+    <section class="block bay" aria-label="In the bay">
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee-row">
+          <img src="/img/pressure-wash.jpg" alt="" loading="lazy" /><img src="/img/tire.jpg" alt="" loading="lazy" /><img src="/img/dash-brush.jpg" alt="" loading="lazy" /><img src="/img/polish.jpg" alt="" loading="lazy" /><img src="/img/foam.jpg" alt="" loading="lazy" /><img src="/img/interior.jpg" alt="" loading="lazy" /><img src="/img/hand-wash.jpg" alt="" loading="lazy" />
+          <img src="/img/pressure-wash.jpg" alt="" loading="lazy" /><img src="/img/tire.jpg" alt="" loading="lazy" /><img src="/img/dash-brush.jpg" alt="" loading="lazy" /><img src="/img/polish.jpg" alt="" loading="lazy" /><img src="/img/foam.jpg" alt="" loading="lazy" /><img src="/img/interior.jpg" alt="" loading="lazy" /><img src="/img/hand-wash.jpg" alt="" loading="lazy" />
+        </div>
+      </div>
+      <div class="wrap">
+        <p class="kicker">Quick questions</p>
+        <h2>Ask before <span>you book.</span></h2>
+        <div class="chips" aria-label="Common questions">
+          <button class="chip" data-ask="Is the 3:30 interior detail and wash on Thursday open?">Is Thursday 3:30 open?</button>
+          <button class="chip" data-ask="What should I do before I bring my car in?">How do I prep my car?</button>
+          <button class="chip" data-ask="I'm interested in ceramic coating. Can I get a quote?">Ceramic coating quote</button>
+          <button class="chip" data-ask="I need to reschedule my appointment.">Reschedule a booking</button>
+          <button class="chip" data-ask="I'm running about 10 minutes late for my appointment today.">I'm running late</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="hours" class="block dark">
+      <div class="wrap split">
+        <div>
+          <p class="kicker">Hours</p>
+          <table class="hours" id="hours-table"></table>
+        </div>
+        <div>
+          <p class="kicker">Visit</p>
+          <p class="address" id="address"></p>
+          <p class="muted">Parking out front. Open Monday to Saturday, closed Sunday.</p>
+          <div class="actions">
+            <button class="btn" data-open-chat>Book online</button>
+            <button class="btn ghost" data-talk><span class="dot"></span>Talk to us</button>
+          </div>
+          <p><a class="phone" data-phone-link href="#"></a></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-row">
+      <span>© Cedar Lane Auto Detailing · <a href="/chat.html">Plain chat</a></span>
+      <span class="credits">Video: <a href="https://mixkit.co">Mixkit</a> · Photos: <a href="https://unsplash.com">Unsplash</a></span>
+    </div>
+  </footer>
+
+  <div class="dock" id="dock">
+    <button class="btn ghost" data-talk aria-label="Talk to the AI receptionist"><span class="dot"></span>Talk</button>
+    <button class="btn" data-open-chat aria-label="Chat with the AI receptionist">Chat</button>
+  </div>
+
+  <section class="panel" id="panel" aria-label="AI receptionist" hidden>
+    <header>
+      <span class="panel-title">AI receptionist</span>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-view="chat">Chat</button>
+        <button role="tab" aria-selected="false" data-view="talk">Talk</button>
+      </div>
+      <button class="x" id="panel-close" aria-label="Close">&times;</button>
+    </header>
+    <div class="view" data-view="chat">
+      <div class="log" id="chat-log" aria-live="polite"></div>
+      <form id="chat-form">
+        <input id="chat-input" autocomplete="off" placeholder="Type a message" aria-label="Message" />
+        <button class="btn small">Send</button>
+      </form>
+    </div>
+    <div class="view talk" data-view="talk" hidden>
+      <div class="orb" id="orb"><span></span></div>
+      <p class="call-status" id="call-status">Talk to our AI receptionist right here, same as calling the shop. Your browser will ask for the microphone.</p>
+      <div class="captions" id="captions" aria-live="polite"></div>
+      <div class="call-actions">
+        <button class="btn" id="call-btn">Start call</button>
+        <button class="btn ghost small" id="mute-btn" hidden>Mute</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="/app.js"></script>
 </body>
 </html>
