@@ -67,17 +67,20 @@ app.post("/vapi", async (req, res) => {
   if (msg.type === "end-of-call-report" && callId) {
     const s = calls.get(callId) ?? {};
     calls.delete(callId);
-    // Vapi's post-call structured extraction (same schema as log_call); tool-call facts win where we have them.
+    // Vapi's post-call LLM extraction fills in intent/summary/needs_human, but it guesses:
+    // it logged "booked" for a call where no booking happened. So facts (outcome, phone, name) come only from
+    // what our tools actually did, or the real caller ID. The extraction never gets to claim a booking.
     const d = msg.analysis?.structuredData ?? {};
+    const claimsAction = /book|resched|cancel/i.test(d.outcome ?? "");
     if (!s.logged)
       await logCall({
         channel: "voice",
-        phone: s.phone || d.phone || callerNumber,
+        phone: s.phone || callerNumber,
         name: s.name || d.name,
         vehicle: d.vehicle,
         intent: s.intent || d.intent || "other",
         summary: d.summary || msg.analysis?.summary || msg.summary || "(no summary)",
-        outcome: s.outcome || d.outcome || `nothing completed (${msg.endedReason})`,
+        outcome: s.outcome || (d.outcome && !claimsAction ? d.outcome : `no booking made (ended: ${msg.endedReason})`),
         needs_human: d.needs_human === true,
       }).catch((e) => console.error("call log failed", e));
   }

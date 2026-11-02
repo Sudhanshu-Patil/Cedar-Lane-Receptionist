@@ -18,7 +18,8 @@ export function assistant(callerNumber?: string) {
       model: process.env.VAPI_MODEL || "gpt-4.1-mini",
       temperature: 0.3,
       maxTokens: 150, // short replies = faster TTS start
-      messages: [{ role: "system", content: buildSystemPrompt("voice", callerNumber) }],
+      // Only offer caller ID if it's a US number: bookings need 10-digit US phones, and reading out "+91 72..." derailed a call.
+      messages: [{ role: "system", content: buildSystemPrompt("voice", callerNumber?.startsWith("+1") ? callerNumber : undefined) }],
       tools: [
         // log_call is chat-only: on voice the model stalled (silent turn) when asked to call a tool at goodbye.
         // Voice calls are logged from Vapi's end-of-call analysis instead (see analysisPlan + /vapi end-of-call-report).
