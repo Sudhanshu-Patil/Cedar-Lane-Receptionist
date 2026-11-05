@@ -4,7 +4,9 @@ import { google, calendar_v3 } from "googleapis";
 import { DateTime } from "luxon";
 import { HOURS, SERVICES, SLOT_STEP_MIN, TZ } from "./config.js";
 
-const sa = JSON.parse(readFileSync(process.env.GOOGLE_SA_JSON!, "utf8"));
+// GOOGLE_SA_JSON is a path to the key file locally, or the key's JSON itself on a host with no files (Render).
+const saEnv = process.env.GOOGLE_SA_JSON!;
+const sa = JSON.parse(saEnv.trim().startsWith("{") ? saEnv : readFileSync(saEnv, "utf8"));
 export const auth = new google.auth.JWT({
   email: sa.client_email,
   key: sa.private_key,

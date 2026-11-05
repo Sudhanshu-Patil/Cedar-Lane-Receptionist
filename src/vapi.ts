@@ -1,7 +1,8 @@
 import { buildSystemPrompt } from "./prompt.js";
 import { TOOLS } from "./tools.js";
 
-export const VAPI_URL = `${process.env.PUBLIC_URL}/vapi`;
+// Render sets RENDER_EXTERNAL_URL on its own, so a deploy needs no PUBLIC_URL.
+export const VAPI_URL = `${process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL}/vapi`;
 
 /** Full Vapi assistant config, built from the same prompt + tools as the chat agent. */
 export function assistant(callerNumber?: string) {

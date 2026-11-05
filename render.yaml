@@ -1,0 +1,24 @@
+# Render blueprint: New > Blueprint > pick this repo. Secrets are entered in the dashboard (sync: false).
+services:
+  - type: web
+    name: cedar-lane-receptionist
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/shop
+    envVars:
+      - key: GROQ_API_KEY      # chat model
+        sync: false
+      - key: GOOGLE_SA_JSON    # paste the whole service-account JSON
+        sync: false
+      - key: CALENDAR_ID
+        sync: false
+      - key: SHEET_ID
+        sync: false
+      - key: VAPI_SECRET
+        sync: false
+      - key: VAPI_API_KEY
+        sync: false
+      - key: VAPI_PUBLIC_KEY
+        sync: false

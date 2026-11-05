@@ -158,7 +158,7 @@ async function send(message) {
   try {
     const r = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId, message }) });
     const data = await r.json();
-    data.reply !== undefined ? add("agent", data.reply) : add("err", "Sorry, something went wrong. Please try again or call us.");
+    data.reply !== undefined ? add("agent", data.reply) : add("err", data.error || "Sorry, something went wrong. Please try again or call us.");
   } catch {
     add("err", "Can't reach the shop right now. Please try again or call us.");
   } finally {
@@ -195,7 +195,7 @@ async function startCall() {
   captions.replaceChildren();
   try {
     const r = await fetch("/api/voice", { method: "POST" });
-    if (!r.ok) throw new Error("Voice calls aren't available right now. Try the chat, or call us.");
+    if (!r.ok) throw new Error(r.status === 429 ? "You've hit the demo limit for voice calls. Please try again later, or call the shop." : "Voice calls aren't available right now. Try the chat, or call us.");
     const { publicKey, assistantId } = await r.json();
     if (!vapi) {
       // Loaded on first use only, so the page stays light.

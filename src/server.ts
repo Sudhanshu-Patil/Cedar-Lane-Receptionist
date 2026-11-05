@@ -7,8 +7,23 @@ import { runTool } from "./tools.js";
 import { ADDRESS, HOURS, LARGE_VEHICLE_SURCHARGE, PHONE, SERVICES, SHOP, TZ } from "./config.js";
 
 const app = express();
+app.set("trust proxy", 1); // behind Render's proxy: req.ip is the visitor, not the proxy
 app.use(express.json());
 app.use(express.static("public"));
+
+// The site is public and chat/voice cost money per use, so cap how often one visitor can hit them.
+// In-memory sliding window per IP; resets on restart, which is fine for one small instance.
+const hits = new Map<string, number[]>();
+function limit(max: number, windowMin: number): express.RequestHandler {
+  return (req, res, next) => {
+    const key = `${req.path}|${req.ip}`, now = Date.now();
+    const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMin * 60_000);
+    if (recent.length >= max) return res.status(429).json({ error: "You've hit the demo limit. Please try again in a little while, or call the shop." });
+    recent.push(now);
+    hits.set(key, recent);
+    next();
+  };
+}
 
 // Public shop facts for the website, straight from config so the site and the agent never disagree.
 app.get("/api/shop", (_req, res) => {
@@ -17,7 +32,7 @@ app.get("/api/shop", (_req, res) => {
 
 // Browser voice calls: refresh the saved assistant (date table, current time) right before each call.
 // Only the public key and assistant id reach the browser; the webhook secret stays server-side.
-app.post("/api/voice", async (_req, res) => {
+app.post("/api/voice", limit(4, 60), async (_req, res) => {
   if (!process.env.VAPI_PUBLIC_KEY || !process.env.VAPI_API_KEY) return res.status(503).json({ error: "voice not configured" });
   try {
     res.json({ publicKey: process.env.VAPI_PUBLIC_KEY, assistantId: await saveAssistant() });
@@ -28,14 +43,15 @@ app.post("/api/voice", async (_req, res) => {
 });
 
 // ---------- Phase 1: text chat ----------
-app.post("/chat", async (req, res) => {
+app.post("/chat", limit(40, 15), async (req, res) => {
   const { sessionId, message } = req.body ?? {};
   if (typeof sessionId !== "string" || typeof message !== "string") return res.status(400).json({ error: "sessionId and message required" });
+  if (message.length > 1000) return res.status(400).json({ error: "That message is too long. Please keep it under 1000 characters." });
   try {
     res.json({ reply: await chat(sessionId, message) });
   } catch (e: any) {
     console.error(e);
-    res.status(500).json({ error: e?.message });
+    res.status(500).json({ error: "Something went wrong on our side. Please try again, or call the shop." });
   }
 });
 
