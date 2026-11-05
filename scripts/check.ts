@@ -44,7 +44,7 @@ assert.ok(names("2026-11-02T03:00").includes("Mon 2 08:00 Jordan Lee")); // clam
 assert.ok(names("2026-11-02T13:10").includes("Mon 2 14:00 Jordan Lee")); // 30-60 min from now
 assert.ok(!names("2026-11-02T17:20").some((n) => n.includes("Jordan"))); // would run past 6 PM close
 assert.ok(!names("2026-11-08T10:00").some((n) => n.includes("Jordan"))); // Sunday: closed
-assert.deepEqual(names("2026-11-05T03:00").slice(0, 1), ["Thu 12 14:30 Mike Chen"]); // on a Thursday -> next week's
+assert.deepEqual(names("2026-11-05T03:00").slice(0, 1), ["Thu 5 14:30 Mike Chen"]); // on a Thursday -> today (the agent reads "Thursday" as today)
 for (const e of seedEvents(t("2026-11-04T09:00"))) // every seed fits business hours and the future
   assert.equal(slotProblem({ start: t(`${e.day.toISODate()}T${e.from}`), end: t(`${e.day.toISODate()}T${e.to}`) }, [], t("2026-11-04T09:00")), null);
 

@@ -10,7 +10,8 @@ type Seed = { day: DateTime; from: string; to: string; service: string; name: st
 export function seedEvents(t: DateTime): Seed[] {
   const today = t.startOf("day");
   const next = (weekday: number) => today.plus({ days: ((weekday - today.weekday + 7) % 7) || 7 }); // strictly after today
-  const thu = next(4), fri = next(5), sat = next(6);
+  // On a Thursday the agent reads "Thursday" as today, so the spec's blocker goes on today too.
+  const thu = today.weekday === 4 ? today : next(4), fri = next(5), sat = next(6);
   const events: Seed[] = [
     // Thursday 2:30-4:30 taken -> "3:30 interior detail & wash" (90 min) is full, 4:30 is open. The spec's example.
     { day: thu, from: "14:30", to: "16:30", service: "full_detail", name: "Mike Chen", phone: "415-555-0111" },
