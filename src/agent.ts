@@ -71,7 +71,7 @@ async function chatGemini(sessionId: string, message: string): Promise<string> {
 }
 
 // ---------- Groq (OpenAI-compatible API), used when GROQ_API_KEY is set ----------
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const GROQ_MODEL = "openai/gpt-oss-120b"; // checked against GET /openai/v1/models; Llama 3.3 70B isn't offered
 const groqTools = TOOLS.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters } }));
 type Msg = { role: "user" | "assistant" | "tool"; content: string | null; tool_calls?: any[]; tool_call_id?: string };
 const groqSessions = new Map<string, Msg[]>();
@@ -81,17 +81,27 @@ async function chatGroq(sessionId: string, message: string): Promise<string> {
   groqSessions.set(sessionId, history);
   const turnStart = history.length;
   history.push({ role: "user", content: message });
+  let waited = false;
   try {
     for (let step = 0; step < 6; step++) {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${GROQ_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: GROQ_MODEL, temperature: 0.2, tools: groqTools, messages: [{ role: "system", content: buildSystemPrompt("chat") }, ...history] }),
+        body: JSON.stringify({ model: GROQ_MODEL, temperature: 0.2, reasoning_effort: "low", tools: groqTools, messages: [{ role: "system", content: buildSystemPrompt("chat") }, ...history] }),
         signal: AbortSignal.timeout(30_000),
       });
+      // Free tier is 8000 tokens/min and one request is ~3k, so short bursts hit 429. Wait it out once if it's brief.
+      const retryAfter = Number(res.headers.get("retry-after"));
+      if (res.status === 429 && !waited && retryAfter > 0 && retryAfter <= 15) {
+        waited = true;
+        console.warn(`[agent] groq rate limited, waiting ${retryAfter}s`);
+        await new Promise((r) => setTimeout(r, retryAfter * 1000));
+        step--;
+        continue;
+      }
       if (!res.ok) {
         const body = await res.text();
-        // Llama occasionally emits a malformed tool call; Groq rejects it with tool_use_failed. Just ask again.
+        // The model occasionally emits a malformed tool call; Groq rejects it with tool_use_failed. Just ask again.
         if (res.status === 400 && body.includes("tool_use_failed")) {
           console.warn("[agent] groq tool_use_failed, retrying");
           continue;
