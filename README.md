@@ -17,13 +17,13 @@ A TypeScript AI receptionist. It books appointments in Google Calendar and logs 
 - **Chat:** a widget that talks to `/chat`.
 - **Talk in your browser:** a Vapi web call to the same assistant as the phone line.
 
-Prices and hours come from `config.ts` through `GET /api/shop`, so the site and the agent always agree. For browser calls, `POST /api/voice` refreshes the saved assistant and returns only the public key and assistant ID, so the webhook secret never reaches the browser. The plain chat page from Phase 1 is still at `/chat.html`. Photos and video are from Unsplash and Mixkit (see `public/CREDITS.md`).
+Prices and hours come from `config.ts` through `GET /api/shop`, so the site and the agent always agree. For browser calls, `POST /api/voice` refreshes the saved assistant and returns only the public key and assistant ID, so the webhook secret never reaches the browser. The plain chat page from Phase 1 is still at `/chat.html`. With `DEMO_RESET=1` (set in `render.yaml`), the server resets the calendar to the seed week once a day after 3 AM shop time (`src/demo.ts`), so visitors' test bookings don't pile up and "Thursday 3:30 is full" always holds for the coming Thursday. Photos and video are from Unsplash and Mixkit (see `public/CREDITS.md`).
 
 ## Run
 ```bash
 npm i
 cp .env.example .env              # fill in the keys (see Setup)
-npm run seed                      # test events + sheet tabs/headers
+npm run seed                      # reset the calendar to the seed week + sheet tabs/headers
 npm run check                     # offline asserts for the slot logic
 npm start                         # http://localhost:3000
 npm run vapi                      # sync the Vapi assistant + phone number to PUBLIC_URL

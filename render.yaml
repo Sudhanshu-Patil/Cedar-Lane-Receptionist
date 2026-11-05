@@ -8,6 +8,8 @@ services:
     startCommand: npm start
     healthCheckPath: /api/shop
     envVars:
+      - key: DEMO_RESET        # reset the demo calendar to the seed week daily, after 3 AM shop time
+        value: "1"
       - key: GROQ_API_KEY      # chat model
         sync: false
       - key: GOOGLE_SA_JSON    # paste the whole service-account JSON

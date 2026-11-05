@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { DateTime } from "luxon";
 import { alternatives, normalizePhone, slotProblem } from "../src/calendar.js";
 import { TZ } from "../src/config.js";
+import { seedEvents } from "../src/demo.js";
 
 const t = (iso: string) => DateTime.fromISO(iso, { zone: TZ });
 const now = t("2026-11-02T08:00"); // Monday morning
@@ -35,5 +36,16 @@ assert.match(slotProblem({ start: t("2026-11-02T07:00"), end: t("2026-11-02T08:0
 assert.match(slotProblem({ start: t("2026-11-02T09:00"), end: t("2026-11-02T10:00") }, [], t("2026-11-02T12:00"))!, /passed/);
 // DST end (Nov 1 2026): local wall-clock times still line up
 assert.equal(t("2026-11-01T10:00").plus({ minutes: 60 }).toFormat("HH:mm"), "11:00");
+
+// demo seed: dates follow now(); the same-day "running late" booking stays inside opening hours
+const names = (ts: string) => seedEvents(t(ts)).map((e) => `${e.day.toFormat("ccc d")} ${e.from} ${e.name}`);
+assert.deepEqual(names("2026-11-02T03:00").slice(0, 1), ["Thu 5 14:30 Mike Chen"]); // Monday 3 AM -> this Thursday
+assert.ok(names("2026-11-02T03:00").includes("Mon 2 08:00 Jordan Lee")); // clamped to opening, not 4 AM
+assert.ok(names("2026-11-02T13:10").includes("Mon 2 14:00 Jordan Lee")); // 30-60 min from now
+assert.ok(!names("2026-11-02T17:20").some((n) => n.includes("Jordan"))); // would run past 6 PM close
+assert.ok(!names("2026-11-08T10:00").some((n) => n.includes("Jordan"))); // Sunday: closed
+assert.deepEqual(names("2026-11-05T03:00").slice(0, 1), ["Thu 12 14:30 Mike Chen"]); // on a Thursday -> next week's
+for (const e of seedEvents(t("2026-11-04T09:00"))) // every seed fits business hours and the future
+  assert.equal(slotProblem({ start: t(`${e.day.toISODate()}T${e.from}`), end: t(`${e.day.toISODate()}T${e.to}`) }, [], t("2026-11-04T09:00")), null);
 
 console.log("all checks passed");

@@ -5,6 +5,8 @@ import { assistant, saveAssistant, VAPI_URL } from "./vapi.js";
 import { logCall } from "./sheets.js";
 import { runTool } from "./tools.js";
 import { ADDRESS, HOURS, LARGE_VEHICLE_SURCHARGE, PHONE, SERVICES, SHOP, TZ } from "./config.js";
+import { now } from "./calendar.js";
+import { lastSeedDate, resetDemo } from "./demo.js";
 
 const app = express();
 app.set("trust proxy", 1); // behind Render's proxy: req.ip is the visitor, not the proxy
@@ -114,6 +116,21 @@ app.post("/vapi", async (req, res) => {
   }
   res.json({});
 });
+
+// Public demo (DEMO_RESET=1): once a day after 3 AM shop time, put the calendar back to the seed week.
+// The seed events carry the date they were laid down, so this survives sleeps and restarts without
+// ever wiping the same day's bookings twice.
+if (process.env.DEMO_RESET) {
+  const tick = async () => {
+    const t = now();
+    if (t.hour < 3 || (await lastSeedDate()) === t.toISODate()) return;
+    const { deleted, seeded } = await resetDemo();
+    console.log(`[demo] daily reset: deleted ${deleted}, seeded ${seeded.length}`);
+  };
+  const run = () => tick().catch((e) => console.error("[demo] reset failed", e?.message));
+  run();
+  setInterval(run, 15 * 60_000);
+}
 
 const port = Number(process.env.PORT) || 3000;
 app.listen(port, () => console.log(`http://localhost:${port}  (Vapi webhook: ${VAPI_URL})`));
